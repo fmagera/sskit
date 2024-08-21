@@ -10,8 +10,6 @@ def world_to_undistorted(camera_matrix, pkt):
 def distort(poly, pkt):
     rr = (pkt ** 2).sum(-1, keepdim=True).sqrt()
     rr2 = polyval(poly, np.arctan(rr))
-    # rr2 = polyval(poly, rr)
-    print("rr, rr2 = ", rr.max(), rr2.max())
     scale = rr2 / rr
     return scale * pkt
 
