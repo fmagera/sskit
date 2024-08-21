@@ -1,0 +1,4 @@
+opencv-python-headless
+ultralytics
+gitpython>=3.1.30
+setuptools>=70.0.0
