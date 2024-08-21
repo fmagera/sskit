@@ -19,6 +19,7 @@ _, h, w = img.shape
 ipkt = npkt * w + torch.tensor([w/2, h/2])
 
 ((ipkt - pkt_img)**2).sum(2).sqrt().argmax()
+((ipkt - pkt_img)**2).sum(2).sqrt().max()
 
 x, y, z = pkt[41]
 world_to_image_nopoly(d, x, y, z)
@@ -35,4 +36,4 @@ world_to_image(camera_matrix, dist_poly, pkt[41]) * w + torch.tensor([w/2, h/2])
 
 immark(img, ipkt)
 imwrite(img, "t.png")
-os.system("eog t.png")
+# os.system("eog t.png")

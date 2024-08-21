@@ -9,7 +9,9 @@ def world_to_undistorted(camera_matrix, pkt):
 
 def distort(poly, pkt):
     rr = (pkt ** 2).sum(-1, keepdim=True).sqrt()
-    rr2 = polyval(poly, rr)
+    rr2 = polyval(poly, np.arctan(rr))
+    # rr2 = polyval(poly, rr)
+    print("rr, rr2 = ", rr.max(), rr2.max())
     scale = rr2 / rr
     return scale * pkt
 
@@ -34,17 +36,30 @@ def load_camera(directory: Path, poly_dim=8):
     def d2a(dist_poly, x):
         return -sum(k * x ** i for i, k in enumerate(dist_poly)) / 180 * np.pi
 
-    rr2 = np.linspace(0, 2, 200)
+    rr2 = np.linspace(0, 1.5, 200)
     # rr = np.tan(d2a(dist_poly, rr2 * sensor_width * pixel_width))
     rr = d2a(dist_poly, rr2 * sensor_width * pixel_width)
-    # rr2 = rr2[rr > 0]
-    # rr = rr[rr > 0]
-    poly = np.polyfit(rr, rr2, poly_dim)
+    msk = (0 <= rr) & (rr < 1.5)
+    rr2 = rr2[msk]
+    rr = rr[msk]
 
-    import matplotlib.pyplot as plt
-    plt.plot(rr, rr2)
-    plt.plot(rr, np.polyval(poly, rr))
-    plt.show()
+    # poly = np.polyfit(np.arctan(rr), rr2, poly_dim)
+    # (rr - np.polyval(poly, np.arctan(rr))).max()
+
+    poly = np.polyfit(rr, rr2, poly_dim)
+    # (rr2 - np.polyval(poly, rr)).max()
+
+    # import matplotlib.pyplot as plt
+    # plt.plot(rr, rr2)
+    # plt.plot(rr, np.polyval(poly, rr))
+    # plt.show()
+
+
+    # import matplotlib.pyplot as plt
+    # plt.plot(np.arctan(rr), rr2)
+    # # plt.plot(np.arctan(rr), np.polyval(poly, rr))
+    # plt.plot(np.arctan(rr), np.polyval(poly, np.arctan(rr)))
+    # plt.show()
 
 
     t = torch.get_default_dtype()
@@ -55,6 +70,9 @@ def load_camera(directory: Path, poly_dim=8):
 d = Path("/home/hakan/data/SoccerCrowdV1/20240103_213931_node052_10173952_3348495_001_000/StudenternasCenterLeft/")
 camera_matrix, dist_poly = load_camera(str(d))
 pkt = torch.tensor([30.5681917364984, 31.9043639410341, 0.0356437899172306])
+
+from sskit.utils import world_to_image_nopoly
+world_to_image_nopoly(d, *pkt)
 
 world_to_undistorted(camera_matrix, pkt)  # (0.21174133411913104, -0.210572232411525)
 ipkt = world_to_image(camera_matrix, dist_poly, pkt)  # 0.1530545827352605, -0.15220951214582118
