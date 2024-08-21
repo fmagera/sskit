@@ -29,12 +29,14 @@ def imshape(fn):
     w, h = im.size
     if im.mode != 'RGB':
         raise NotImplementedError
-    return (h, w, 3)
+    return (3, h, w)
 
 def to_homogeneous(pkt):
+    pkt = torch.as_tensor(pkt)
     return torch.cat([pkt, torch.ones_like(pkt[..., 0:1])], -1)
 
 def to_cartesian(pkt):
+    pkt = torch.as_tensor(pkt)
     return pkt[..., :-1] / pkt[..., -1:]
 
 class Draw:
@@ -43,7 +45,7 @@ class Draw:
         self.draw = PIL.ImageDraw.Draw(self.pil_img)
 
     def _point_list(self, xy):
-        xy = torch.atleast_2d(xy)
+        xy = torch.atleast_2d(torch.as_tensor(xy))
         assert xy.shape[-1] == 2
         for x, y in xy.reshape(-1, 2):
             yield (float(x), float(y))

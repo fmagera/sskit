@@ -13,12 +13,14 @@ def undistorted_to_ground(camera_matrix, pkt):
     return torch.cat([pkt, torch.zeros_like(pkt[..., 0:1])], -1)
 
 def distort(poly, pkt):
+    pkt = torch.as_tensor(pkt)
     rr = (pkt ** 2).sum(-1, keepdim=True).sqrt()
     rr2 = polyval(poly, torch.arctan(rr))
     scale = rr2 / rr
     return scale * pkt
 
 def undistort(poly, pkt):
+    pkt = torch.as_tensor(pkt)
     rr2 = (pkt ** 2).sum(-1, keepdim=True).sqrt()
     rr = torch.tan(polyval(poly, rr2))
     scale = rr / rr2

@@ -3,8 +3,8 @@ from sskit import load_camera, imread, world_to_image, Draw, image_to_ground
 import json
 import torch
 
-d = Path("example/")
-camera_matrix, dist_poly, undist_poly = load_camera(str(d), 8)
+d = Path("example")
+camera_matrix, dist_poly, undist_poly = load_camera(d)
 name = 'pelvis'
 
 img = imread(d / "rgb.jpg")
@@ -23,7 +23,7 @@ drw.circle(ipkt, 3, (255,0,0))
 # image_to_ground(camera_matrix, undist_poly, p)
 
 pkt[:,2] = 0
-npkt_gnd = world_to_image(camera_matrix[None], dist_poly[None], pkt)
+npkt_gnd = world_to_image(camera_matrix, dist_poly, pkt)
 ipkt_gnd = npkt_gnd * w + torch.tensor([w/2, h/2])
 drw.circle(ipkt_gnd, 3, (0,255,0))
 drw.line([ipkt, ipkt_gnd], (0,0,255), 2)
