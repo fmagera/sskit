@@ -59,46 +59,9 @@ def load_camera(directory: Path, poly_dim=8):
     poly = np.polyfit(rr, rr2, poly_dim)
     rev_poly = np.polyfit(rr2, rr, poly_dim)
 
-    # import matplotlib.pyplot as plt
-    # plt.plot(rr, rr2)
-    # plt.plot(rr, np.polyval(poly, rr))
-    # plt.show()
-
     t = torch.get_default_dtype()
     camera_matrix_t = torch.tensor(camera_matrix).to(t)
     poly_t = torch.tensor(poly).to(t)
     rev_poly_t = torch.tensor(rev_poly).to(t)
     return camera_matrix_t, poly_t, rev_poly_t
 
-# def a2d(a, dist_poly):
-#     a0 = -a * 180 / np.pi
-#     x = (a0 - dist_poly[0]) / dist_poly[1]
-#     for i in range(20):
-#         x = (
-#             a0 - sum(k * x ** i for i, k in enumerate(dist_poly) if i != 1)
-#         ) / dist_poly[1]
-#     return x
-
-# def world_to_image_nopoly(d, x, y, z):
-#     camera_matrix = np.load(d / "camera_matrix.npy")
-#     with open(d / "lens.json") as fd:
-#         lens = json.load(fd)
-#     dist_poly = lens["dist_poly"]
-#     sensor_width = lens["sensor_width"]
-#     pixel_width = lens["pixel_width"]
-
-#     x, y, z, _ = camera_matrix @ (x, y, z, 1)
-#     cx = x / z
-#     cy = y / z
-#     print("cx, cy = ", cx, cy)
-
-#     rr = np.sqrt(cx ** 2 + cy ** 2)
-#     rr2 = a2d(np.arctan(rr), dist_poly) / pixel_width / sensor_width
-#     print("rr, rr2 = ", rr, rr2)
-
-#     cx *= rr2/rr
-#     cy *= rr2/rr
-
-#     height, width, _ = imshape(d / 'rgb.jpg')
-#     principal = np.array([width / 2, height / 2])
-#     return width * cx + principal[0], width * cy + principal[1]
