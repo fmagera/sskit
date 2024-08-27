@@ -4,6 +4,8 @@ from torchvision.transforms.functional import to_pil_image
 import torch
 import PIL.Image
 import PIL.ImageDraw
+from torch.nn.functional import grid_sample
+
 
 def imread(fn):
     return read_image(fn).to(torch.get_default_dtype()) / 255
@@ -61,3 +63,21 @@ class Draw:
 
     def save(self, fn):
         self.pil_img.save(fn)
+
+def grid2d(w, h):
+    grid_y = torch.linspace(0.0, h-1, h)
+    grid_y = torch.reshape(grid_y, [h, 1])
+    grid_y = grid_y.repeat(1, w)
+
+    grid_x = torch.linspace(0.0, w-1, w)
+    grid_x = torch.reshape(grid_x, [1, w])
+    grid_x = grid_x.repeat(h, 1)
+
+    grid = torch.stack([grid_x, grid_y], dim=-1)
+    return grid
+
+def sample_image(image, grid):
+    n, c, h, w = image.shape
+    scaled_grid = 2 * grid
+    scaled_grid[..., 1] *= w/h
+    return grid_sample(image, scaled_grid, align_corners=False)

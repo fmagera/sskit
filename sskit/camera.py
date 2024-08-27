@@ -1,7 +1,7 @@
 import torch
 import numpy as np
 import json
-from sskit.utils import to_homogeneous, to_cartesian
+from sskit.utils import to_homogeneous, to_cartesian, grid2d, sample_image
 from pathlib import Path
 
 def world_to_undistorted(camera_matrix, pkt):
@@ -65,3 +65,42 @@ def load_camera(directory: Path, poly_dim=8):
     rev_poly_t = torch.tensor(rev_poly).to(t)
     return camera_matrix_t, poly_t, rev_poly_t
 
+def project_on_ground(camera_matrix, dist_poly, image, width=70, height=120, resolution=10, center=(0,0), z=0):
+    center = torch.as_tensor(center, device=image.device) - torch.tensor([width/2, height/2], device=image.device)
+    gnd = grid2d(width * resolution, height * resolution) / resolution + center
+    pkt = gnd.reshape(-1, 2)
+    pkt = torch.cat([pkt, z * torch.ones_like(pkt[..., 0:1])], -1)
+    grid = world_to_image(camera_matrix, dist_poly, pkt).reshape(gnd.shape)
+    return sample_image(image, grid[None])
+
+def undistort_image(dist_poly, image, zoom=1):
+    h, w = image.shape[-2:]
+    grid = (grid2d(w, h) - torch.tensor([w/2, h/2])) / w / zoom
+    dgrid = distort(dist_poly, grid)
+    return sample_image(image, dgrid[None])
+
+def get_pan_tilt_from_direction(direction):
+    direction = torch.as_tensor(direction)
+    x, y, z = direction
+    return torch.arctan2(-y, x), torch.arctan2(z, torch.sqrt(x**2 + y**2))
+
+def make_rotation_matrix_from_pan_tilt(pan: float, tilt: float):
+    pan = torch.as_tensor(pan)
+    tilt = torch.as_tensor(tilt)
+    cp = torch.cos(pan)
+    sp = torch.sin(pan)
+    ct = torch.cos(tilt)
+    st = torch.sin(tilt)
+    return torch.tensor(((-sp, -cp, 0), (st * cp, -st * sp, -ct), (ct * cp, -ct * sp, st)))
+
+def look_at(camera_matrix, dist_poly, image, center, zoom=1):
+    center = torch.as_tensor(center)
+    focal_point = -torch.inverse(camera_matrix[:,:3]) @ camera_matrix[:, 3]
+    pan, tilt = get_pan_tilt_from_direction(center - focal_point)
+
+    rot = camera_matrix[:,:3] @ make_rotation_matrix_from_pan_tilt(pan, tilt).mT
+    h, w = image.shape[-2:]
+    grid = (grid2d(w, h) - torch.tensor([w/2, h/2])) / w / zoom
+    rgrid = to_cartesian(torch.matmul(to_homogeneous(grid), rot.mT))
+    dgrid = distort(dist_poly, rgrid)
+    return sample_image(image, dgrid[None])
