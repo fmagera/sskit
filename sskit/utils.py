@@ -46,11 +46,11 @@ class Draw:
         self.pil_img = to_pil_image(img)
         self.draw = PIL.ImageDraw.Draw(self.pil_img)
 
-    def _point_list(self, xy):
+    def _point_list(self, xy, n=2):
         xy = torch.atleast_2d(torch.as_tensor(xy))
-        assert xy.shape[-1] == 2
-        for x, y in xy.reshape(-1, 2):
-            yield (float(x), float(y))
+        assert xy.shape[-1] == n
+        for pkt in xy.reshape(-1, n):
+            yield tuple(map(float, pkt))
 
     def circle(self, xy, radius, fill=None, outline=None, width=1):
         for pkt in self._point_list(xy):
@@ -60,6 +60,10 @@ class Draw:
         points = [self._point_list(l) for l in xy]
         for pkts in zip(*points):
             self.draw.line(list(pkts), fill, width, joint)
+
+    def rectangle(self, xy, fill=None, outline=None, width=1):
+        for pkt in self._point_list(xy, 4):
+            self.draw.rectangle(pkt, fill, outline, width)
 
     def save(self, fn):
         self.pil_img.save(fn)
