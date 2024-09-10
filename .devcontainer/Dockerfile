@@ -1,6 +1,6 @@
-ARG TORCH_VERSION=2.4.0-cuda12.1-cudnn9
-# ARG DEVEL=devel
-ARG DEVEL=runtime
+ARG TORCH_VERSION=2.4.1-cuda12.1-cudnn9
+ARG DEVEL=devel
+# ARG DEVEL=runtime
 
 FROM pytorch/pytorch:${TORCH_VERSION}-${DEVEL} as build
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt,sharing=locked apt-get update && apt-get autoclean && DEBIAN_FRONTEND=noninteractive TZ=CEST \
@@ -13,14 +13,16 @@ ENV TORCH_CUDA_ARCH_LIST="6.0 6.1 7.0 7.5 8.0 8.6+PTX" \
 ENV CUDA_HOME=/usr/local/cuda/
 
 COPY requirements*.txt /workspace/
-RUN --mount=type=cache,target=/root/.cache/pip pip wheel --wheel-dir /wheels -r requirements.txt
+RUN --mount=type=cache,target=/root/.cache/pip pip wheel --wheel-dir /wheels --no-deps -r requirements.txt
 RUN --mount=type=cache,target=/root/.cache/pip pip wheel --wheel-dir /wheels-devel --no-deps -r requirements-devel.txt
 
 FROM pytorch/pytorch:${TORCH_VERSION}-runtime as base
 RUN rm -f /etc/apt/apt.conf.d/docker-clean
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked --mount=type=cache,target=/var/lib/apt,sharing=locked apt-get update && apt-get autoclean && DEBIAN_FRONTEND=noninteractive TZ=CEST \
     apt-get --yes install git libglib2.0-0 curl wget libosmesa6 freeglut3 libegl1 libgbm1 libgles1 libgles2 libice6 libsm6
-RUN --mount=type=bind,from=build,source=/wheels,target=/wheels --mount=type=cache,target=/root/.cache/pip pip install --no-deps /wheels/*
+RUN --mount=type=bind,from=build,source=/wheels,target=/wheels --mount=type=cache,target=/root/.cache/pip pip install /wheels/*
+
+# RUN --mount=type=cache,target=/root/.cache/pip mim install mmengine "mmcv==2.1.0" "mmdet>=3.1.0" "mmpose>=1.1.0"
 
 FROM base as vscode
 RUN curl -L 'https://code.visualstudio.com/sha/download?build=stable&os=cli-alpine-x64' | tar -C /usr/local/bin/ -x -v -z -f -
