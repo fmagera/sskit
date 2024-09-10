@@ -2,9 +2,12 @@ from pathlib import Path
 from sskit import imshape, world_to_image, load_camera
 import json
 from tqdm import tqdm
+import sys
 
-d = Path('/home/hakan/data/SoccerCrowdV1')
-out = Path('/home/hakan/data/SpiideoScenes/SoccerCrowd/v1')
+# d = Path('/home/hakan/data/SoccerCrowdV1')
+# out = Path('/home/hakan/data/SpiideoScenes/SoccerCrowd/v1')
+d = Path(sys.argv[0])
+out = Path(sys.argv[1])
 
 def mkcoco(part):
     imdir = out / part
