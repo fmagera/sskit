@@ -6,8 +6,8 @@ import sys
 
 # d = Path('/home/hakan/data/SoccerCrowdV1')
 # out = Path('/home/hakan/data/SpiideoScenes/SoccerCrowd/v1')
-d = Path(sys.argv[0])
-out = Path(sys.argv[1])
+d = Path(sys.argv[1])
+out = Path(sys.argv[2])
 
 def mkcoco(part):
     imdir = out / part
