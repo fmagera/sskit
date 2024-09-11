@@ -3,6 +3,9 @@ from sskit import imshape, world_to_image, load_camera
 import json
 from tqdm import tqdm
 import sys
+import numpy as np
+import gzip
+from io import BytesIO
 
 # d = Path('/home/hakan/data/SoccerCrowdV1')
 # out = Path('/home/hakan/data/SpiideoScenes/SoccerCrowd/v1')
@@ -23,6 +26,7 @@ def mkcoco(part):
         with open(fn.parent / "objects.json") as fd:
             objects = json.load(fd)
         camera_matrix, dist_poly, undist_poly = load_camera(fn.parent)
+        segs = np.load(BytesIO(gzip.decompress((fn.parent / "segmentations.npy.gz").read_bytes())))
 
         images.append(dict(
             id=iid,
@@ -54,6 +58,7 @@ def mkcoco(part):
                 id=len(annotations),
                 keypoints=[[pu, pv, 1], [pu2, pv2, 1]],
                 bbox=[u0, v0, box_w, box_h],
+                area=(segs==obj['segmentation_id']).sum(),
                 image_id=iid,
                 category_id=1,
             ))
