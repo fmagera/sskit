@@ -58,7 +58,7 @@ def mkcoco(part):
                 id=len(annotations),
                 keypoints=[[pu, pv, 1], [pu2, pv2, 1]],
                 bbox=[u0, v0, box_w, box_h],
-                area=(segs==obj['segmentation_id']).sum(),
+                area=int((segs==obj['segmentation_id']).sum()),
                 image_id=iid,
                 category_id=1,
             ))
@@ -69,7 +69,7 @@ def mkcoco(part):
     with open(out / "annotations" / f"{part}.json", "w") as fd:
         json.dump(dict(images=images, annotations=annotations, categories=[dict(id=1, name="person")]), fd)
 
-mkcoco("train")
 mkcoco("val")
 mkcoco("test")
 mkcoco("challange")
+mkcoco("train")
