@@ -26,7 +26,15 @@ def mkcoco(part):
         with open(fn.parent / "objects.json") as fd:
             objects = json.load(fd)
         camera_matrix, dist_poly, undist_poly = load_camera(fn.parent)
-        segs = np.load(BytesIO(gzip.decompress((fn.parent / "segmentations.npy.gz").read_bytes())))
+        afn = fn.parent / "areas_cache.json"
+        if afn.exists():
+            with afn.open() as fd:
+                areas = json.load(fd)
+            segs = None
+        else:
+            segs = np.load(BytesIO(gzip.decompress((fn.parent / "segmentations.npy.gz").read_bytes())))
+            areas = {}
+        areas_updated = False
 
         images.append(dict(
             id=iid,
@@ -39,7 +47,7 @@ def mkcoco(part):
         ))
 
 
-        for obj in objects.values():
+        for oid, obj in sorted(objects.items()):
             if obj['class'] == 'human':
                 for key in ["bounding_box_tighter", "bounding_box_tight"]:
                     if key in obj:
@@ -54,15 +62,26 @@ def mkcoco(part):
             pu, pv = (world_to_image(camera_matrix, dist_poly, [px, py, pz]).numpy() * w + (w/2, h/2))
             pu2, pv2 = (world_to_image(camera_matrix, dist_poly, [px, py, 0]).numpy() * w + (w/2, h/2))
 
+            if oid not in areas:
+                areas[oid] = int((segs==obj['segmentation_id']).sum())
+                areas_updated = True
+
+
             annotations.append(dict(
                 id=len(annotations),
                 keypoints=[[pu, pv, 1], [pu2, pv2, 1]],
+                keypoints_3d=[[px, py, pz, 1], [px, py, 0, 1]],
+                position_on_pitch=[px, py],
                 bbox=[u0, v0, box_w, box_h],
-                area=int((segs==obj['segmentation_id']).sum()),
+                area=areas[oid],
                 image_id=iid,
                 category_id=1,
             ))
 
+
+        if areas_updated:
+            with afn.open('w') as fd:
+                json.dump(areas, fd)
 
 
     (out / "annotations").mkdir(exist_ok=True)
