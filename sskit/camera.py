@@ -5,15 +5,18 @@ from sskit.utils import to_homogeneous, to_cartesian, grid2d, sample_image
 from pathlib import Path
 
 def world_to_undistorted(camera_matrix, pkt):
+    camera_matrix = torch.as_tensor(camera_matrix)
     return to_cartesian(torch.matmul(to_homogeneous(pkt), camera_matrix.mT))
 
 def undistorted_to_ground(camera_matrix, pkt):
+    camera_matrix = torch.as_tensor(camera_matrix)
     hom = torch.inverse(camera_matrix[..., [0, 1, 3]])
     pkt = to_cartesian(torch.matmul(to_homogeneous(pkt), hom.mT))
     return torch.cat([pkt, torch.zeros_like(pkt[..., 0:1])], -1)
 
 def distort(poly, pkt):
     pkt = torch.as_tensor(pkt)
+    poly = torch.as_tensor(poly)
     rr = (pkt ** 2).sum(-1, keepdim=True).sqrt()
     rr2 = polyval(poly, torch.arctan(rr))
     scale = rr2 / rr
@@ -21,6 +24,7 @@ def distort(poly, pkt):
 
 def undistort(poly, pkt):
     pkt = torch.as_tensor(pkt)
+    poly = torch.as_tensor(poly)
     rr2 = (pkt ** 2).sum(-1, keepdim=True).sqrt()
     rr = torch.tan(polyval(poly, rr2))
     scale = rr / rr2
