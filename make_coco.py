@@ -88,6 +88,7 @@ def mkcoco(part):
     with open(out / "annotations" / f"{part}.json", "w") as fd:
         json.dump(dict(images=images, annotations=annotations, categories=[dict(id=1, name="person")]), fd)
 
+mkcoco("mini")
 mkcoco("val")
 mkcoco("test")
 mkcoco("challange")
