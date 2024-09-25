@@ -37,6 +37,37 @@ class LocSimCOCOeval(COCOeval):
         locsim = np.exp(np.log(0.05) * dist2 / tau**2)
         return locsim
 
+    def accumulate(self, p=None):
+        if p is None:
+            p = self.params
+        super().accumulate(p)
+
+        iou = p.iouThrs == 0.5
+        area = p.areaRngLbl.index('all')
+        dets = np.argmax(p.maxDets)
+
+        precision = np.squeeze(self.eval['precision'][iou, :, 0, area, dets])
+        scores = np.squeeze(self.eval['scores'][iou, :, 0, area, dets])
+        recall = p.recThrs
+        f1 = 2 * precision * recall / (precision + recall)
+
+        self.eval['precision_50'] = precision
+        self.eval['recall_50'] = recall
+        self.eval['f1_50'] = f1
+        self.eval['scores_50'] = scores
+
+    def summarize(self):
+        super().summarize()
+        if hasattr(self.params, 'score_threshold'):
+            threshold = self.params.score_threshold
+        else:
+            i = self.eval['f1_50'].argmax()
+            threshold = (self.eval['scores_50'][i] + self.eval['scores_50'][i+1]) / 2
+        i = np.searchsorted(-self.eval['scores_50'], -threshold, 'right') - 1
+        stats = [self.eval['precision_50'][i], self.eval['recall_50'][i], self.eval['f1_50'][i], threshold]
+        self.stats = np.concatenate([self.stats, stats])
+
+
 class BBoxLocSimCOCOeval(LocSimCOCOeval):
     def get_img_pos(self, dt):
         def bbox_ground(x, y, w, h):
