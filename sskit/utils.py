@@ -55,18 +55,27 @@ class Draw:
     def circle(self, xy, radius, fill=None, outline=None, width=1):
         for pkt in self._point_list(xy):
             self.draw.circle(pkt, radius, fill, outline, width)
+        return self
 
     def line(self, xy, fill=None, width=0, joint=None):
         points = [self._point_list(l) for l in xy]
         for pkts in zip(*points):
             self.draw.line(list(pkts), fill, width, joint)
+        return self
 
     def rectangle(self, xy, fill=None, outline=None, width=1):
         for pkt in self._point_list(xy, 4):
             self.draw.rectangle(pkt, fill, outline, width)
+        return self
+
+    def text(self, xy, text, font_size=60):
+        for pkt in self._point_list(xy):
+            self.draw.text(pkt, text, font_size=font_size)
+        return self
 
     def save(self, fn):
         self.pil_img.save(fn)
+        return self
 
 def grid2d(w, h):
     grid_y = torch.linspace(0.0, h-1, h)

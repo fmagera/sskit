@@ -4,6 +4,16 @@ import json
 from sskit.utils import to_homogeneous, to_cartesian, grid2d, sample_image
 from pathlib import Path
 
+def normalize(pkt, image_shape):
+    pkt = torch.as_tensor(pkt)
+    _, h, w = image_shape
+    return (pkt - torch.tensor([w/2, h/2])) / w
+
+def unnormalize(pkt, image_shape):
+    pkt = torch.as_tensor(pkt)
+    _, h, w = image_shape
+    return w * pkt + torch.tensor([w/2, h/2])
+
 def world_to_undistorted(camera_matrix, pkt):
     camera_matrix = torch.as_tensor(camera_matrix)
     return to_cartesian(torch.matmul(to_homogeneous(pkt), camera_matrix.mT))
