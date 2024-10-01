@@ -54,7 +54,7 @@ class Draw:
 
     def circle(self, xy, radius, fill=None, outline=None, width=1):
         for pkt in self._point_list(xy):
-            self.draw.circle(pkt, radius, fill, outline, width)
+            self.draw.ellipse((pkt[0]-radius, pkt[1]-radius, pkt[0]+radius, pkt[1]+radius), fill, outline, width)
         return self
 
     def line(self, xy, fill=None, width=0, joint=None):
